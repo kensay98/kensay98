@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href='https://unpkg.com/boxicons@2.0.7/css/boxicons.min.css' rel='stylesheet'>
+</head>
+<body>
+<div class="subtitles">
+    Lorem ipsum dolor sit amet, consectetur adipisicing elit. Autem cupiditate debitis deleniti doloribus esse,
+    explicabo harum id in iste laboriosam minima quasi rerum vero. Alias repellendus suscipit unde veritatis vitae.
+</div>
+<div class="info">
+    <p id="timer">00:00</p>
+</div>
+<div class="controls">
+    <button onclick="back()">
+        <i class='bx bx-revision bx-flip-horizontal'></i>
+    </button>
+    <button onclick="play()">
+        <i class='bx bx-play'></i>
+    </button>
+    <button onclick="forward()">
+        <i class='bx bx-revision'></i>
+    </button>
+</div>
+
+<script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
+<script src="subtitle.parser.min.js"></script>
+<script>
+    const peer = new Peer();
+    var connection = null;
+    var subtitles = null;
+    var downloading = false;
+
+    function play() {
+        connection.send('play')
+    }
+
+    function back() {
+        connection.send('back')
+    }
+
+    function forward() {
+        connection.send('forward')
+    }
+
+    peer.on('open', function (id) {
+        const urlParams = new URLSearchParams(window.location.search);
+        var destId = urlParams.get('connection');
+
+        var conn = peer.connect(destId)
+        conn.on('open', function () {
+            connection = conn;
+            alert('connected!')
+        })
+
+        conn.on('data', function (data) {
+            if (!subtitles && downloading === false) {
+                downloadSubtitles(data.v)
+            }
+
+            render(data)
+        })
+    });
+
+    function render(data) {
+        const timer = document.querySelector('#timer');
+        timer.innerHTML = data.time
+
+        if (!subtitles) {
+            return
+        }
+
+        const s = document.querySelector('.subtitles');
+        const sub = getSubtitle(data.time)
+        s.innerHTML = sub
+    }
+
+    function toSeconds(string) {
+        var a = string.split(':')
+        return (+a[0]) * 60 * 60 + (+a[1]) * 60 + (+a[2]);
+    }
+
+    function getSubtitle(second) {
+        second += 1
+        for (var i = 0; i < subtitles.length; i++) {
+            var current = subtitles[i]
+            var next = subtitles[i + 1]
+
+            console.log(second)
+
+            if (toSeconds(current.startTime) < second && second < toSeconds(next.startTime)) {
+                var regex = /(<([^>]+)>)/ig;
+                return current.text.replace(regex, "");
+            }
+        }
+    }
+
+
+    function downloadSubtitles(video) {
+        downloading = true;
+        fetch(`https://rocky-basin-08657.herokuapp.com/${video}/`, {
+            // mode: 'no-cors'
+        }).then((result) => {
+            console.log(result.status)
+            result.text().then((text) => {
+                console.log(text)
+                subtitles = parser.fromSrt(text)
+
+                const s = document.querySelector('.subtitles');
+                s.innerHTML = ''
+
+                console.log(subtitles)
+
+                subtitles.forEach((sub) => {
+                    s.innerHTML += `<p>[${toSeconds(sub.startTime)}] ${sub.text}</p>`
+                })
+            })
+        });
+    }
+
+</script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+.controls {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    height: 300px;
+    width: 100%;
+    display: flex;
+    justify-content: space-around;
+}
+
+.controls button {
+    height: 80%;
+    width: 250px;
+    font-size: 100px;
+}
+
+.subtitles {
+    margin-top: 300px;
+    font-size: 50px;
+    line-height: 200px;
+    padding: 50px;
+}
+
+.info {
+    position: fixed;
+    width: 100%;
+    left: 0;
+    top: 0;
+    font-size: 100px;
+    padding: 50px;
+    text-align: center;
+}
